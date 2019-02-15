@@ -3,7 +3,6 @@
 [![Join the chat at https://gitter.im/angular/angular](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/angular/angular?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![npm version](https://badge.fury.io/js/%40angular%2Fcore.svg)](https://www.npmjs.com/@angular/core)
 
-
 # Angular
 
 Angular is a development platform for building mobile and desktop web applications using Typescript/JavaScript and other languages.
@@ -14,7 +13,7 @@ Angular is a development platform for building mobile and desktop web applicatio
 
 ## Changelog
 
-[Learn about the latest improvements][changelog]. 
+[Learn about the latest improvements][changelog].
 
 ## Want to help?
 
@@ -26,3 +25,5 @@ guidelines for [contributing][contributing] and then check out one of our issues
 [quickstart]: https://angular.io/guide/quickstart
 [changelog]: https://github.com/angular/angular/blob/master/CHANGELOG.md
 [ng]: https://angular.io
+
+Bonjour 4d!
