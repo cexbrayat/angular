@@ -6,11 +6,9 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {LOCALE_ID, Pipe, PipeTransform} from '@angular/core';
-import {NgLocalization, getPluralCategory} from '../i18n/localization';
+import {Inject, LOCALE_ID, Pipe, PipeTransform} from '@angular/core';
+import {formatPlural} from '../i18n/localization';
 import {invalidPipeArgumentError} from './invalid_pipe_argument_error';
-
-const _INTERPOLATION_REGEXP: RegExp = /#/g;
 
 /**
  * @ngModule CommonModule
@@ -28,7 +26,7 @@ const _INTERPOLATION_REGEXP: RegExp = /#/g;
  */
 @Pipe({name: 'i18nPlural', pure: true})
 export class I18nPluralPipe implements PipeTransform {
-  constructor(private _localization: NgLocalization) {}
+  constructor(@Inject(LOCALE_ID) private _locale: string) {}
 
   /**
    * @param value the number to be formatted
@@ -38,14 +36,10 @@ export class I18nPluralPipe implements PipeTransform {
    * default).
    */
   transform(value: number, pluralMap: {[count: string]: string}, locale?: string): string {
-    if (value == null) return '';
-
     if (typeof pluralMap !== 'object' || pluralMap === null) {
       throw invalidPipeArgumentError(I18nPluralPipe, pluralMap);
     }
 
-    const key = getPluralCategory(value, Object.keys(pluralMap), this._localization, locale);
-
-    return pluralMap[key].replace(_INTERPOLATION_REGEXP, value.toString());
+    return formatPlural(value, pluralMap, locale || this._locale);
   }
 }

@@ -22,6 +22,64 @@ export abstract class NgLocalization {
   abstract getPluralCategory(value: any, locale?: string): string;
 }
 
+const _INTERPOLATION_REGEXP: RegExp = /#/g;
+
+function _getPluralCategory(value: number, pluralMap: {[count: string]: string}, locale: string) {
+  if (value == null) return '';
+
+  const cases = Object.keys(pluralMap);
+  let key = `=${value}`;
+
+  if (cases.indexOf(key) > -1) {
+    return key;
+  }
+
+  const pluralKey = getLocalePluralCase(locale)(value);
+  key = pluralToString(pluralKey);
+
+  if (cases.indexOf(key) > -1) {
+    return key;
+  }
+
+  if (cases.indexOf('other') > -1) {
+    return 'other';
+  }
+
+  throw new Error(`No plural message found for value "${value}"`);
+}
+
+/**
+ * @ngModule CommonModule
+ * @description
+ *
+ * Maps a value to a string that pluralizes the value according to locale rules.
+ *
+ * @param value the number to be formatted
+ * @param pluralMap an object that mimics the ICU format, see
+ * http://userguide.icu-project.org/formatparse/messages.
+ * @param locale a `string` defining the locale to use (uses the current {@link LOCALE_ID} by
+ * default).
+ *
+ * @usageNotes
+ * ### Manually set the errors for a control
+ *
+ * ```
+ * const MESSAGES = {'=0': 'No messages.', '=1': 'One message.', 'other': '# messages.'};
+ * const twoMessages = formatPlural(2, MESSAGES);
+ * expect(twoMessages).toBe('2 messages.');
+ *
+ * ```
+ *
+ * @publicApi
+ */
+export function formatPlural(value: number, pluralMap: {[count: string]: string}, locale: string): string {
+  const key = _getPluralCategory(value, pluralMap, locale);
+  if (key) {
+    return pluralMap[key].replace(_INTERPOLATION_REGEXP, value.toString());
+  }
+  return '';
+}
+
 
 /**
  * Returns the plural category for a given value.
@@ -49,6 +107,23 @@ export function getPluralCategory(
   throw new Error(`No plural message found for value "${value}"`);
 }
 
+function pluralToString(plural: Plural) {
+  switch (plural) {
+    case Plural.Zero:
+      return 'zero';
+    case Plural.One:
+      return 'one';
+    case Plural.Two:
+      return 'two';
+    case Plural.Few:
+      return 'few';
+    case Plural.Many:
+      return 'many';
+    default:
+      return 'other';
+  }
+}
+
 /**
  * Returns the plural case based on the locale
  *
@@ -68,20 +143,7 @@ export class NgLocaleLocalization extends NgLocalization {
     const plural = this.deprecatedPluralFn ? this.deprecatedPluralFn(locale || this.locale, value) :
                                              getLocalePluralCase(locale || this.locale)(value);
 
-    switch (plural) {
-      case Plural.Zero:
-        return 'zero';
-      case Plural.One:
-        return 'one';
-      case Plural.Two:
-        return 'two';
-      case Plural.Few:
-        return 'few';
-      case Plural.Many:
-        return 'many';
-      default:
-        return 'other';
-    }
+    return pluralToString(plural)
   }
 }
 

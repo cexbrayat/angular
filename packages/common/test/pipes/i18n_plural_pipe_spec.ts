@@ -6,14 +6,14 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {I18nPluralPipe, NgLocalization} from '@angular/common';
+import { I18nPluralPipe, registerLocaleData } from '@angular/common';
 import {PipeResolver} from '@angular/compiler/src/pipe_resolver';
 import {beforeEach, describe, expect, it} from '@angular/core/testing/src/testing_internal';
 import {JitReflector} from '@angular/platform-browser-dynamic/src/compiler_reflector';
+import localeBe from '@angular/common/locales/be';
 
 {
   describe('I18nPluralPipe', () => {
-    let localization: NgLocalization;
     let pipe: I18nPluralPipe;
 
     const mapping = {
@@ -23,9 +23,13 @@ import {JitReflector} from '@angular/platform-browser-dynamic/src/compiler_refle
       'other': 'There are # messages, that is #.',
     };
 
+    beforeAll(() => {
+      // 'be' locale returns `many` for 6, and `other` for `4`
+      registerLocaleData(localeBe);
+    });
+
     beforeEach(() => {
-      localization = new TestLocalization();
-      pipe = new I18nPluralPipe(localization);
+      pipe = new I18nPluralPipe('be');
     });
 
     it('should be marked as pure', () => {
@@ -44,13 +48,13 @@ import {JitReflector} from '@angular/platform-browser-dynamic/src/compiler_refle
       });
 
       it('should return category messages', () => {
-        const val = pipe.transform(4, mapping);
+        const val = pipe.transform(6, mapping);
         expect(val).toEqual('Many messages.');
       });
 
       it('should interpolate the value into the text where indicated', () => {
-        const val = pipe.transform(6, mapping);
-        expect(val).toEqual('There are 6 messages, that is 6.');
+        const val = pipe.transform(4, mapping);
+        expect(val).toEqual('There are 4 messages, that is 4.');
       });
 
       it('should use "" if value is undefined', () => {
@@ -63,8 +67,4 @@ import {JitReflector} from '@angular/platform-browser-dynamic/src/compiler_refle
     });
 
   });
-}
-
-class TestLocalization extends NgLocalization {
-  getPluralCategory(value: number): string { return value > 1 && value < 6 ? 'many' : 'other'; }
 }
