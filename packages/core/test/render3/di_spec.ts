@@ -6,14 +6,14 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Attribute, ChangeDetectorRef, ElementRef, Host, INJECTOR, Inject, InjectFlags, Injector, Optional, Renderer2, Self, SkipSelf, TemplateRef, ViewContainerRef, defineInjectable, defineInjector} from '@angular/core';
+import {ChangeDetectorRef, ElementRef, Host, INJECTOR, Inject, InjectFlags, Injector, Optional, Renderer2, Self, SkipSelf, TemplateRef, ViewContainerRef, defineInjectable, defineInjector} from '@angular/core';
 import {ComponentType, RenderFlags} from '@angular/core/src/render3/interfaces/definition';
 
 import {defineComponent} from '../../src/render3/definition';
 import {bloomAdd, bloomHasToken, bloomHashBitOrFactory as bloomHash, getOrCreateNodeInjectorForNode} from '../../src/render3/di';
 import {ProvidersFeature, defineDirective, elementProperty, load, templateRefExtractor} from '../../src/render3/index';
 
-import {allocHostVars, bind, container, containerRefreshEnd, containerRefreshStart, createNodeAtIndex, createLView, createTView, directiveInject, element, elementEnd, elementStart, embeddedViewEnd, embeddedViewStart, injectAttribute, interpolation2, projection, projectionDef, reference, template, text, textBinding, elementContainerStart, elementContainerEnd} from '../../src/render3/instructions';
+import {allocHostVars, bind, container, containerRefreshEnd, containerRefreshStart, createNodeAtIndex, createLView, createTView, directiveInject, element, elementEnd, elementStart, embeddedViewEnd, embeddedViewStart, interpolation2, projection, projectionDef, reference, template, text, textBinding, elementContainerStart, elementContainerEnd} from '../../src/render3/instructions';
 import {isProceduralRenderer, RElement} from '../../src/render3/interfaces/renderer';
 import {AttributeMarker, TNodeType} from '../../src/render3/interfaces/node';
 import {getNativeByIndex} from '../../src/render3/util/view_utils';
@@ -2052,126 +2052,6 @@ describe('di', () => {
 
     it('should throw when injecting Renderer2 but the application is using Renderer3',
        () => { expect(() => new ComponentFixture(MyComp)).toThrow(); });
-  });
-
-  describe('@Attribute', () => {
-    let myDirectiveInstance !: MyDirective | null;
-
-    class MyDirective {
-      exists = 'wrong' as string | null;
-      myDirective = 'wrong' as string | null;
-      constructor(
-          @Attribute('exist') existAttrValue: string|null,
-          @Attribute('myDirective') myDirectiveAttrValue: string|null) {
-        this.exists = existAttrValue;
-        this.myDirective = myDirectiveAttrValue;
-      }
-
-      static ngDirectiveDef = defineDirective({
-        type: MyDirective,
-        selectors: [['', 'myDirective', '']],
-        factory: () => myDirectiveInstance =
-                     new MyDirective(injectAttribute('exist'), injectAttribute('myDirective'))
-      });
-    }
-
-    beforeEach(() => myDirectiveInstance = null);
-
-    it('should inject attribute', () => {
-      let exist = 'wrong' as string | null;
-      let nonExist = 'wrong' as string | null;
-
-      const MyApp = createComponent('my-app', function(rf: RenderFlags, ctx: any) {
-        if (rf & RenderFlags.Create) {
-          elementStart(0, 'div', ['exist', 'existValue', 'other', 'ignore']);
-          exist = injectAttribute('exist');
-          nonExist = injectAttribute('nonExist');
-        }
-      }, 1);
-
-      new ComponentFixture(MyApp);
-      expect(exist).toEqual('existValue');
-      expect(nonExist).toBeNull();
-    });
-
-    // https://stackblitz.com/edit/angular-scawyi?file=src%2Fapp%2Fapp.component.ts
-    it('should inject attributes on <ng-template>', () => {
-      let myDirectiveInstance: MyDirective;
-
-      /* <ng-template myDirective="initial" exist="existValue" other="ignore"></ng-template>*/
-      const MyApp = createComponent('my-app', function(rf: RenderFlags, ctx: any) {
-        if (rf & RenderFlags.Create) {
-          template(
-              0, null, 0, 0, 'ng-template',
-              ['myDirective', 'initial', 'exist', 'existValue', 'other', 'ignore']);
-        }
-        if (rf & RenderFlags.Update) {
-          myDirectiveInstance = getDirectiveOnNode(0);
-        }
-      }, 1, 0, [MyDirective]);
-
-      new ComponentFixture(MyApp);
-      expect(myDirectiveInstance !.exists).toEqual('existValue');
-      expect(myDirectiveInstance !.myDirective).toEqual('initial');
-    });
-
-    // https://stackblitz.com/edit/angular-scawyi?file=src%2Fapp%2Fapp.component.ts
-    it('should inject attributes on <ng-container>', () => {
-      let myDirectiveInstance: MyDirective;
-
-      /* <ng-container myDirective="initial" exist="existValue" other="ignore"></ng-container>*/
-      const MyApp = createComponent('my-app', function(rf: RenderFlags, ctx: any) {
-        if (rf & RenderFlags.Create) {
-          elementContainerStart(
-              0, ['myDirective', 'initial', 'exist', 'existValue', 'other', 'ignore']);
-          elementContainerEnd();
-        }
-        if (rf & RenderFlags.Update) {
-          myDirectiveInstance = getDirectiveOnNode(0);
-        }
-      }, 1, 0, [MyDirective]);
-
-      new ComponentFixture(MyApp);
-      expect(myDirectiveInstance !.exists).toEqual('existValue');
-      expect(myDirectiveInstance !.myDirective).toEqual('initial');
-    });
-
-    // https://stackblitz.com/edit/angular-8ytqkp?file=src%2Fapp%2Fapp.component.ts
-    it('should not inject attributes representing bindings and outputs', () => {
-      let exist = 'wrong' as string | null;
-      let nonExist = 'wrong' as string | null;
-
-      const MyApp = createComponent('my-app', function(rf: RenderFlags, ctx: any) {
-        if (rf & RenderFlags.Create) {
-          elementStart(0, 'div', ['exist', 'existValue', AttributeMarker.Bindings, 'nonExist']);
-          exist = injectAttribute('exist');
-          nonExist = injectAttribute('nonExist');
-        }
-      }, 1);
-
-      new ComponentFixture(MyApp);
-      expect(exist).toEqual('existValue');
-      expect(nonExist).toBeNull();
-    });
-
-    it('should not accidentally inject attributes representing bindings and outputs', () => {
-      let exist = 'wrong' as string | null;
-      let nonExist = 'wrong' as string | null;
-
-      const MyApp = createComponent('my-app', function(rf: RenderFlags, ctx: any) {
-        if (rf & RenderFlags.Create) {
-          elementStart(0, 'div', [
-            'exist', 'existValue', AttributeMarker.Bindings, 'binding1', 'nonExist', 'binding2'
-          ]);
-          exist = injectAttribute('exist');
-          nonExist = injectAttribute('nonExist');
-        }
-      }, 1);
-
-      new ComponentFixture(MyApp);
-      expect(exist).toEqual('existValue');
-      expect(nonExist).toBeNull();
-    });
   });
 
   describe('inject', () => {
