@@ -6,19 +6,18 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ChangeDetectorRef, ElementRef, Host, INJECTOR, Inject, InjectFlags, Injector, Optional, Renderer2, Self, SkipSelf, TemplateRef, ViewContainerRef, defineInjectable, defineInjector} from '@angular/core';
+import {ChangeDetectorRef, Host, Inject, InjectFlags, Injector, Optional, Renderer2, Self, SkipSelf, TemplateRef, ViewContainerRef, defineInjectable, defineInjector} from '@angular/core';
 import {ComponentType, RenderFlags} from '@angular/core/src/render3/interfaces/definition';
 
 import {defineComponent} from '../../src/render3/definition';
 import {bloomAdd, bloomHasToken, bloomHashBitOrFactory as bloomHash, getOrCreateNodeInjectorForNode} from '../../src/render3/di';
-import {ProvidersFeature, defineDirective, elementProperty, load, templateRefExtractor} from '../../src/render3/index';
+import {ProvidersFeature, defineDirective, elementProperty, templateRefExtractor} from '../../src/render3/index';
 
-import {allocHostVars, bind, container, containerRefreshEnd, containerRefreshStart, createNodeAtIndex, createLView, createTView, directiveInject, element, elementEnd, elementStart, embeddedViewEnd, embeddedViewStart, interpolation2, projection, projectionDef, reference, template, text, textBinding, elementContainerStart, elementContainerEnd} from '../../src/render3/instructions';
-import {isProceduralRenderer, RElement} from '../../src/render3/interfaces/renderer';
+import {allocHostVars, bind, container, containerRefreshEnd, containerRefreshStart, createNodeAtIndex, createLView, createTView, directiveInject, element, elementEnd, elementStart, embeddedViewEnd, embeddedViewStart, interpolation2, projection, projectionDef, reference, template, text, textBinding} from '../../src/render3/instructions';
+import {isProceduralRenderer} from '../../src/render3/interfaces/renderer';
 import {AttributeMarker, TNodeType} from '../../src/render3/interfaces/node';
-import {getNativeByIndex} from '../../src/render3/util/view_utils';
 import {LViewFlags} from '../../src/render3/interfaces/view';
-import {enterView, leaveView, getLView} from '../../src/render3/state';
+import {enterView, leaveView} from '../../src/render3/state';
 import {ViewRef} from '../../src/render3/view_ref';
 
 import {getRendererFactory2} from './imported_renderer2';
@@ -26,7 +25,6 @@ import {ComponentFixture, createComponent, createDirective, getDirectiveOnNode, 
 import {NgIf} from './common_with_def';
 import {TNODE} from '../../src/render3/interfaces/injector';
 import {createInjector} from '../../src/di/r3_injector';
-import {LContainer, NATIVE} from '../../src/render3/interfaces/container';
 
 describe('di', () => {
   describe('no dependencies', () => {
@@ -1419,326 +1417,6 @@ describe('di', () => {
 
   describe('Special tokens', () => {
 
-    describe('Injector', () => {
-
-      it('should inject the injector', () => {
-        let injectorDir !: InjectorDir;
-        let otherInjectorDir !: OtherInjectorDir;
-        let divElement !: HTMLElement;
-
-        class InjectorDir {
-          constructor(public injector: Injector) {}
-
-          static ngDirectiveDef = defineDirective({
-            type: InjectorDir,
-            selectors: [['', 'injectorDir', '']],
-            factory: () => injectorDir = new InjectorDir(directiveInject(Injector as any))
-          });
-        }
-
-        class OtherInjectorDir {
-          constructor(public otherDir: InjectorDir, public injector: Injector) {}
-
-          static ngDirectiveDef = defineDirective({
-            type: OtherInjectorDir,
-            selectors: [['', 'otherInjectorDir', '']],
-            factory: () => otherInjectorDir = new OtherInjectorDir(
-                         directiveInject(InjectorDir), directiveInject(Injector as any))
-          });
-        }
-
-
-        /** <div injectorDir otherInjectorDir></div> */
-        const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-          if (rf & RenderFlags.Create) {
-            element(0, 'div', ['injectorDir', '', 'otherInjectorDir', '']);
-          }
-          // testing only
-          divElement = load(0);
-        }, 1, 0, [InjectorDir, OtherInjectorDir]);
-
-        const fixture = new ComponentFixture(App);
-        expect(injectorDir.injector.get(ElementRef).nativeElement).toBe(divElement);
-        expect(otherInjectorDir.injector.get(ElementRef).nativeElement).toBe(divElement);
-        expect(otherInjectorDir.injector.get(InjectorDir)).toBe(injectorDir);
-        expect(injectorDir.injector).not.toBe(otherInjectorDir.injector);
-      });
-
-      it('should inject INJECTOR', () => {
-        let injectorDir !: INJECTORDir;
-        let divElement !: HTMLElement;
-
-        class INJECTORDir {
-          constructor(public injector: Injector) {}
-
-          static ngDirectiveDef = defineDirective({
-            type: INJECTORDir,
-            selectors: [['', 'injectorDir', '']],
-            factory: () => injectorDir = new INJECTORDir(directiveInject(INJECTOR as any))
-          });
-        }
-
-
-        /** <div injectorDir otherInjectorDir></div> */
-        const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-          if (rf & RenderFlags.Create) {
-            element(0, 'div', ['injectorDir', '']);
-          }
-          // testing only
-          divElement = load(0);
-        }, 1, 0, [INJECTORDir]);
-
-        const fixture = new ComponentFixture(App);
-        expect(injectorDir.injector.get(ElementRef).nativeElement).toBe(divElement);
-        expect(injectorDir.injector.get(Injector).get(ElementRef).nativeElement).toBe(divElement);
-        expect(injectorDir.injector.get(INJECTOR).get(ElementRef).nativeElement).toBe(divElement);
-      });
-
-    });
-
-    describe('ElementRef', () => {
-
-      it('should create directive with ElementRef dependencies', () => {
-        let dir !: Directive;
-        let dirSameInstance !: DirectiveSameInstance;
-        let div !: RElement;
-
-        class Directive {
-          value: string;
-          constructor(public elementRef: ElementRef) {
-            this.value = (elementRef.constructor as any).name;
-          }
-          static ngDirectiveDef = defineDirective({
-            type: Directive,
-            selectors: [['', 'dir', '']],
-            factory: () => dir = new Directive(directiveInject(ElementRef)),
-            exportAs: ['dir']
-          });
-        }
-
-        class DirectiveSameInstance {
-          isSameInstance: boolean;
-          constructor(public elementRef: ElementRef, directive: Directive) {
-            this.isSameInstance = elementRef === directive.elementRef;
-          }
-          static ngDirectiveDef = defineDirective({
-            type: DirectiveSameInstance,
-            selectors: [['', 'dirSame', '']],
-            factory: () => dirSameInstance = new DirectiveSameInstance(
-                         directiveInject(ElementRef), directiveInject(Directive)),
-            exportAs: ['dirSame']
-          });
-        }
-
-        /** <div dir dirSame></div> */
-        const App = createComponent('app', function(rf: RenderFlags, ctx: any) {
-          if (rf & RenderFlags.Create) {
-            elementStart(0, 'div', ['dir', '', 'dirSame', '']);
-            elementEnd();
-            div = getNativeByIndex(0, getLView()) as RElement;
-          }
-        }, 1, 0, [Directive, DirectiveSameInstance]);
-
-        const fixture = new ComponentFixture(App);
-        expect(dir.value).toContain('ElementRef');
-        expect(dir.elementRef.nativeElement).toEqual(div);
-        expect(dirSameInstance.elementRef.nativeElement).toEqual(div);
-
-        // Each ElementRef instance should be unique
-        expect(dirSameInstance.isSameInstance).toBe(false);
-      });
-
-      it('should create ElementRef with comment if requesting directive is on <ng-template> node',
-         () => {
-           let dir !: Directive;
-           let lContainer !: LContainer;
-
-           class Directive {
-             value: string;
-             constructor(public elementRef: ElementRef) {
-               this.value = (elementRef.constructor as any).name;
-             }
-             static ngDirectiveDef = defineDirective({
-               type: Directive,
-               selectors: [['', 'dir', '']],
-               factory: () => dir = new Directive(directiveInject(ElementRef)),
-               exportAs: ['dir']
-             });
-           }
-
-           /** <ng-template dir></ng-template> */
-           const App = createComponent('app', function(rf: RenderFlags, ctx: any) {
-             if (rf & RenderFlags.Create) {
-               template(0, () => {}, 0, 0, 'ng-template', ['dir', '']);
-               lContainer = load(0) as any;
-             }
-           }, 1, 0, [Directive]);
-
-           const fixture = new ComponentFixture(App);
-           expect(dir.value).toContain('ElementRef');
-           expect(dir.elementRef.nativeElement).toEqual(lContainer[NATIVE]);
-         });
-    });
-
-    describe('TemplateRef', () => {
-      class Directive {
-        value: string;
-        constructor(public templateRef: TemplateRef<any>) {
-          this.value = (templateRef.constructor as any).name;
-        }
-        static ngDirectiveDef = defineDirective({
-          type: Directive,
-          selectors: [['', 'dir', '']],
-          factory: () => new Directive(directiveInject(TemplateRef as any)),
-          exportAs: ['dir']
-        });
-      }
-
-      it('should create directive with TemplateRef dependencies', () => {
-        class DirectiveSameInstance {
-          isSameInstance: boolean;
-          constructor(templateRef: TemplateRef<any>, directive: Directive) {
-            this.isSameInstance = templateRef === directive.templateRef;
-          }
-          static ngDirectiveDef = defineDirective({
-            type: DirectiveSameInstance,
-            selectors: [['', 'dirSame', '']],
-            factory: () => new DirectiveSameInstance(
-                         directiveInject(TemplateRef as any), directiveInject(Directive)),
-            exportAs: ['dirSame']
-          });
-        }
-
-        /**
-         * <ng-template dir dirSame #dir="dir" #dirSame="dirSame">
-         *   {{ dir.value }} - {{ dirSame.value }}
-         * </ng-template>
-         */
-        const App = createComponent('app', function(rf: RenderFlags, ctx: any) {
-          if (rf & RenderFlags.Create) {
-            template(
-                0, function() {}, 0, 0, 'ng-template', ['dir', '', 'dirSame', ''],
-                ['dir', 'dir', 'dirSame', 'dirSame']);
-            text(3);
-          }
-          if (rf & RenderFlags.Update) {
-            const tmp1 = reference(1) as any;
-            const tmp2 = reference(2) as any;
-            textBinding(3, interpolation2('', tmp1.value, '-', tmp2.isSameInstance, ''));
-          }
-        }, 4, 2, [Directive, DirectiveSameInstance]);
-
-        const fixture = new ComponentFixture(App);
-        // Each TemplateRef instance should be unique
-        expect(fixture.html).toContain('TemplateRef');
-        expect(fixture.html).toContain('false');
-      });
-
-      it('should throw if injected on an element', () => {
-        /** <div dir></div> */
-        const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-          if (rf & RenderFlags.Create) {
-            element(0, 'div', ['dir', '']);
-          }
-        }, 1, 0, [Directive]);
-
-        expect(() => new ComponentFixture(App)).toThrowError(/No provider for TemplateRef/);
-      });
-
-      it('should throw if injected on an ng-container', () => {
-        /** <ng-container dir></ng-container> */
-        const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-          if (rf & RenderFlags.Create) {
-            elementContainerStart(0, ['dir', '']);
-            elementContainerEnd();
-          }
-        }, 1, 0, [Directive]);
-
-        expect(() => new ComponentFixture(App)).toThrowError(/No provider for TemplateRef/);
-      });
-
-      it('should NOT throw if optional and injected on an element', () => {
-        let dir !: OptionalDirective;
-        class OptionalDirective {
-          constructor(@Optional() public templateRef: TemplateRef<any>) {}
-
-          static ngDirectiveDef = defineDirective({
-            type: OptionalDirective,
-            selectors: [['', 'dir', '']],
-            factory: () => dir = new OptionalDirective(
-                         directiveInject(TemplateRef as any, InjectFlags.Optional)),
-            exportAs: ['dir']
-          });
-        }
-
-        /** <div dir></div> */
-        const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-          if (rf & RenderFlags.Create) {
-            element(0, 'div', ['dir', '']);
-          }
-        }, 1, 0, [OptionalDirective]);
-
-        expect(() => new ComponentFixture(App)).not.toThrow();
-        expect(dir.templateRef).toBeNull();
-      });
-
-    });
-
-    describe('ViewContainerRef', () => {
-      it('should create directive with ViewContainerRef dependencies', () => {
-        class Directive {
-          value: string;
-          constructor(public viewContainerRef: ViewContainerRef) {
-            this.value = (viewContainerRef.constructor as any).name;
-          }
-          static ngDirectiveDef = defineDirective({
-            type: Directive,
-            selectors: [['', 'dir', '']],
-            factory: () => new Directive(directiveInject(ViewContainerRef as any)),
-            exportAs: ['dir']
-          });
-        }
-
-        class DirectiveSameInstance {
-          isSameInstance: boolean;
-          constructor(viewContainerRef: ViewContainerRef, directive: Directive) {
-            this.isSameInstance = viewContainerRef === directive.viewContainerRef;
-          }
-          static ngDirectiveDef = defineDirective({
-            type: DirectiveSameInstance,
-            selectors: [['', 'dirSame', '']],
-            factory: () => new DirectiveSameInstance(
-                         directiveInject(ViewContainerRef as any), directiveInject(Directive)),
-            exportAs: ['dirSame']
-          });
-        }
-
-        /**
-         * <div dir dirSame #dir="dir" #dirSame="dirSame">
-         *   {{ dir.value }} - {{ dirSame.value }}
-         * </div>
-         */
-        const App = createComponent('app', function(rf: RenderFlags, ctx: any) {
-          if (rf & RenderFlags.Create) {
-            elementStart(
-                0, 'div', ['dir', '', 'dirSame', ''], ['dir', 'dir', 'dirSame', 'dirSame']);
-            { text(3); }
-            elementEnd();
-          }
-          if (rf & RenderFlags.Update) {
-            const tmp1 = reference(1) as any;
-            const tmp2 = reference(2) as any;
-            textBinding(3, interpolation2('', tmp1.value, '-', tmp2.isSameInstance, ''));
-          }
-        }, 4, 2, [Directive, DirectiveSameInstance]);
-
-        const fixture = new ComponentFixture(App);
-        // Each ViewContainerRef instance should be unique
-        expect(fixture.html).toContain('ViewContainerRef');
-        expect(fixture.html).toContain('false');
-      });
-    });
-
     describe('ChangeDetectorRef', () => {
       let dir: Directive;
       let dirSameInstance: DirectiveSameInstance;
@@ -1993,36 +1671,6 @@ describe('di', () => {
         expect(dir !.cdr).not.toBe(app.cdr);
         expect(dir !.cdr).not.toBe(dirSameInstance !.cdr);
       });
-    });
-  });
-
-  describe('string tokens', () => {
-    it('should be able to provide a string token', () => {
-      let injectorDir !: InjectorDir;
-      let divElement !: HTMLElement;
-
-      class InjectorDir {
-        constructor(public value: string) {}
-
-        static ngDirectiveDef = defineDirective({
-          type: InjectorDir,
-          selectors: [['', 'injectorDir', '']],
-          factory: () => injectorDir = new InjectorDir(directiveInject('test' as any)),
-          features: [ProvidersFeature([{provide: 'test', useValue: 'provided'}])],
-        });
-      }
-
-      /** <div injectorDir otherInjectorDir></div> */
-      const App = createComponent('app', (rf: RenderFlags, ctx: any) => {
-        if (rf & RenderFlags.Create) {
-          element(0, 'div', ['injectorDir', '']);
-        }
-        // testing only
-        divElement = load(0);
-      }, 1, 0, [InjectorDir]);
-
-      const fixture = new ComponentFixture(App);
-      expect(injectorDir.value).toBe('provided');
     });
   });
 
