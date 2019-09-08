@@ -595,7 +595,7 @@ export class TemplateDefinitionBuilder implements t.Visitor<void>, LocalResolver
       if (attr.name === NG_PROJECT_AS_ATTR_NAME) {
         attributes.push(...getNgProjectAsLiteral(attr));
       } else {
-        attributes.push(...getAttributeNameLiterals(attr.name), o.literal(attr.value));
+        attributes.push(...getAttributeNameLiterals(attr.name), o.literal(attr.value.toLowerCase()));
       }
     });
 

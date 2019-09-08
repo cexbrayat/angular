@@ -242,7 +242,7 @@ export class StylingBuilder {
     if (this._initialClassValues.length) {
       attrs.push(o.literal(AttributeMarker.Classes));
       for (let i = 0; i < this._initialClassValues.length; i++) {
-        attrs.push(o.literal(this._initialClassValues[i]));
+        attrs.push(o.literal(this._initialClassValues[i].toLowerCase()));
       }
     }
 
