@@ -965,6 +965,43 @@ describe('control flow migration', () => {
       ].join('\n'));
     });
 
+    it('should migrate an inline template with if and for loops nested', async () => {
+      writeFile('/comp.ts', `
+        import {Component} from '@angular/core';
+        import {NgIf, NgFor} from '@angular/common';
+
+        @Component({
+          imports: [NgFor, NgIf],
+          templateUrl: './comp.html'
+        })
+        export class UserComponent {
+          countries = ['Belgium', 'France'];
+          cities = ['Paris', 'Lyon'];
+        }
+      `);
+
+      writeFile('/comp.html', [
+        `<ul>`,
+        `<li *ngFor="let country of countries">{{ country }}</li>`,
+        `</ul>`,
+        `<ul *ngIf="true">`,
+        `<li *ngFor="let city of cities">{{ city }}</li>`,
+        `</ul>`,
+      ].join('\n'));
+
+      await runMigration();
+      const content = tree.readContent('/comp.html');
+
+      expect(content).toBe([
+        `<ul>`,
+        `@for (country of countries; track country) {<li>{{ country }}</li>}`,
+        `</ul>`,
+        `@if (true) {<ul>`,
+        `@for (city of cities; track city) {<li>{{ city }}</li>}`,
+        `</ul>}`,
+      ].join('\n'));
+    });
+
     it('should migrate an inline template with if, else and for loops', async () => {
       writeFile('/comp.ts', `
         import {Component} from '@angular/core';
