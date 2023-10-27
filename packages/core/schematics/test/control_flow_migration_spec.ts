@@ -1178,6 +1178,34 @@ describe('control flow migration', () => {
           'template: `<div>@switch (testOpts) { @case (1) { <p>Option 1</p> } @case (2) { <p>Option 2</p> }}</div>');
     });
 
+    it('should handle comments', async () => {
+      writeFile(
+          '/comp.ts',
+          `
+        import {Component} from '@angular/core';
+        import {ngSwitch, ngSwitchCase} from '@angular/common';
+
+        @Component({
+          template: \`<div>` +
+              `<ng-container [ngSwitch]="testOpts">` +
+              `<p *ngSwitchCase="1">Option 1</p>` +
+              `<!-- comment -->` +
+              `<p *ngSwitchCase="2">Option 2</p>` +
+              `</ng-container>` +
+              `</div>\`
+        })
+        class Comp {
+          testOpts = "1";
+        }
+      `);
+
+      await runMigration();
+      const content = tree.readContent('/comp.ts');
+
+      expect(content).toContain(
+          'template: `<div>@switch (testOpts) { @case (1) { <p>Option 1</p> } @case (2) { <!-- comment --><p>Option 2</p> }}</div>');
+    });
+
     it('should handle cases with missing star', async () => {
       writeFile(
           '/comp.ts',
