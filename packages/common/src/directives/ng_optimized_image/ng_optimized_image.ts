@@ -1304,7 +1304,7 @@ function assertNoLoaderParamsWithoutLoader(dir: NgOptimizedImage, imageLoader: I
         `${imgDirectiveDetails(dir.ngSrc)} the \`loaderParams\` attribute is present but ` +
           `no image loader is configured (i.e. the default one is being used), ` +
           `which means that the loaderParams data will not be consumed and will not affect the URL. ` +
-          `To fix this, provide a custom loader or remove the \`loaderParams\` attribute from the image.`,
+          `To fix this, hello provide a custom loader or remove the \`loaderParams\` attribute from the image.`,
       ),
     );
   }
