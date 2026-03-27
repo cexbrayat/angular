@@ -6,8 +6,9 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-import {Injector, Signal, WritableSignal} from '@angular/core';
+import {Signal, WritableSignal} from '@angular/core';
 import {AbstractControl} from '@angular/forms';
+import type {SignalFormsClassBinding} from '../../config/src/api';
 import type {FormField} from '../directive/form_field';
 import type {MetadataKey, ValidationError} from './rules';
 
@@ -609,29 +610,11 @@ export type FieldStateByMode<
  *
  * @experimental 22.0
  */
-export interface FormFieldBinding {
-  /**
-   * The HTML element on which the {@link FormField} directive is applied.
-   */
-  readonly element: HTMLElement;
-
-  /**
-   * The node injector for the element hosting this field binding.
-   */
-  readonly injector: Injector;
-
+export interface FormFieldBinding extends SignalFormsClassBinding {
   /**
    * The {@link FieldState} of the field bound to the {@link FormField} directive.
    */
   readonly state: Signal<ReadonlyFieldState<unknown>>;
-
-  /**
-   * Focuses this field binding.
-   *
-   * By default, this will focus {@link element}. However, custom controls can implement their own
-   * focus behavior.
-   */
-  focus(options?: FocusOptions): void;
 }
 
 /**

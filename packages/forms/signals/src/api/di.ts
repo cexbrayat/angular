@@ -6,27 +6,4 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-import {type Provider} from '@angular/core';
-import type {FormFieldBinding} from '../api/types';
-import {SIGNAL_FORMS_CONFIG} from '../field/di';
-
-/**
- * Configuration options for signal forms.
- *
- * @experimental 21.0.1
- */
-export interface SignalFormsConfig {
-  /** A map of CSS class names to predicate functions that determine when to apply them. */
-  classes?: {
-    [className: string]: (formField: FormFieldBinding) => boolean;
-  };
-}
-
-/**
- * Provides configuration options for signal forms.
- *
- * @experimental 21.0.1
- */
-export function provideSignalFormsConfig(config: SignalFormsConfig): Provider[] {
-  return [{provide: SIGNAL_FORMS_CONFIG, useValue: config}];
-}
+export {provideSignalFormsConfig, type SignalFormsConfig} from '../../config/src/api';

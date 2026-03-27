@@ -6,4 +6,9 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-export {SIGNAL_FORMS_CONFIG} from '../../config/src/di';
+/**
+ * @module
+ * @description
+ * Entry point for signal forms configuration APIs.
+ */
+export * from './src/api';

@@ -35,7 +35,7 @@ import {type ValidationError} from '../api/rules';
 import type {Field, FieldState} from '../api/types';
 import {InteropNgControl} from '../controls/interop_ng_control';
 import {RuntimeErrorCode} from '../errors';
-import {SIGNAL_FORMS_CONFIG} from '../field/di';
+import {SIGNAL_FORMS_CONFIG} from '../../config/src/di';
 import type {FieldNode} from '../field/node';
 import {bindingUpdated, type ControlBindingKey, createBindings} from './bindings';
 import {customControlCreate} from './control_custom';
