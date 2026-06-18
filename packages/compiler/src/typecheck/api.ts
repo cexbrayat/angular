@@ -73,6 +73,7 @@ export type TcbInputMapping = InputOrOutput & {
    * AST-free string representation of the transform type of the input, if available.
    */
   transformType?: string;
+
 };
 
 export interface TcbPipeMetadata {

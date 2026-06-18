@@ -20,6 +20,7 @@ import {reflectObjectLiteral} from '../../../reflection';
  */
 export function parseAndValidateInputAndOutputOptions(optionsNode: ts.Expression): {
   alias: string | undefined;
+  transform: ts.Expression | undefined;
 } {
   if (!ts.isObjectLiteralExpression(optionsNode)) {
     throw new FatalDiagnosticError(
@@ -31,6 +32,7 @@ export function parseAndValidateInputAndOutputOptions(optionsNode: ts.Expression
 
   const options = reflectObjectLiteral(optionsNode);
   let alias: string | undefined = undefined;
+  let transform: ts.Expression | undefined = undefined;
 
   if (options.has('alias')) {
     const aliasExpr = options.get('alias')!;
@@ -45,5 +47,9 @@ export function parseAndValidateInputAndOutputOptions(optionsNode: ts.Expression
     alias = aliasExpr.text;
   }
 
-  return {alias};
+  if (options.has('transform')) {
+    transform = options.get('transform')!;
+  }
+
+  return {alias, transform};
 }

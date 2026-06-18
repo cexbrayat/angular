@@ -161,6 +161,14 @@ export type InputMapping = InputOrOutput & {
    * is lost in the `.d.ts` for type-checking.
    */
   transform: DecoratorInputTransform | null;
+
+  /**
+   * Transform type for a signal input, if one is configured and available during type checking.
+   *
+   * Signal inputs do not emit a reference to the transform because the runtime transform is captured
+   * in the signal initializer. This metadata is only used by the template type checker.
+   */
+  signalInputTransform?: DecoratorInputTransform | null;
 };
 
 /** Metadata for a model mapping. */

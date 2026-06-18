@@ -40,6 +40,7 @@ export function tryParseSignalInputMapping(
   member: Pick<ClassMember, 'name' | 'value' | 'accessLevel'>,
   reflector: ReflectionHost,
   importTracker: ImportedSymbolsTracker,
+  parseTransform?: (transform: ts.Expression) => InputMapping['signalInputTransform'],
 ): InputMapping | null {
   if (member.value === null) {
     return null;
@@ -69,8 +70,11 @@ export function tryParseSignalInputMapping(
     classPropertyName,
     bindingPropertyName: options?.alias ?? classPropertyName,
     required: signalInput.isRequired,
-    // Signal inputs do not capture complex transform metadata.
-    // See more details in the `transform` type of `InputMapping`.
+    // Signal inputs only capture transform metadata when it is needed for template type-checking.
     transform: null,
+    signalInputTransform:
+      options?.transform !== undefined && parseTransform !== undefined
+        ? parseTransform(options.transform)
+        : null,
   };
 }

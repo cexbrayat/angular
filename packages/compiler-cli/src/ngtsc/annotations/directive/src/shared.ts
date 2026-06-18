@@ -1316,7 +1316,46 @@ function tryParseInputFieldMapping(
   const classPropertyName = member.name;
 
   const decorator = tryGetDecoratorOnMember(member, 'Input', isCore);
-  const signalInputMapping = tryParseSignalInputMapping(member, reflector, importTracker);
+  const signalInputMapping = tryParseSignalInputMapping(
+    member,
+    reflector,
+    importTracker,
+    (transform) => {
+      if (ts.isArrowFunction(transform) || ts.isFunctionExpression(transform)) {
+        const firstParamName = transform.parameters[0]?.name;
+        const firstParam =
+          firstParamName !== undefined &&
+          ts.isIdentifier(firstParamName) &&
+          firstParamName.text === 'this'
+            ? transform.parameters[1]
+            : transform.parameters[0];
+
+        if (
+          firstParam === undefined ||
+          firstParam.type === undefined ||
+          firstParam.dotDotDotToken
+        ) {
+          return null;
+        }
+      }
+
+      const transformValue = evaluator.evaluate(transform);
+
+      if (!(transformValue instanceof DynamicValue) && !(transformValue instanceof Reference)) {
+        return null;
+      }
+
+      return parseDecoratorInputTransformFunction(
+        clazz,
+        classPropertyName,
+        transformValue,
+        reflector,
+        refEmitter,
+        compilationMode,
+        emitDeclarationOnly,
+      );
+    },
+  );
   const modelInputMapping = tryParseSignalModelMapping(member, reflector, importTracker);
 
   if (decorator !== null && signalInputMapping !== null) {
@@ -1489,8 +1528,8 @@ function parseInputFields(
  * into a different place, so that the input write type can be captured at
  * a later point in a static acceptance member.
  *
- * Note: This is not needed for signal inputs where the transform type is
- * automatically captured in the type of the `InputSignal`.
+ * Note: Signal inputs capture their transform write type in the `InputSignal`. Their transform
+ * type is only needed here for checking static text attributes.
  *
  */
 export function parseDecoratorInputTransformFunction(
@@ -2246,7 +2285,9 @@ function toR3InputMetadata(mapping: InputMapping): R3InputMetadata {
     bindingPropertyName: mapping.bindingPropertyName,
     required: mapping.required,
     transformFunction:
-      mapping.transform !== null ? new WrappedNodeExpr(mapping.transform.node) : null,
+      !mapping.isSignal && mapping.transform !== null
+        ? new WrappedNodeExpr(mapping.transform.node)
+        : null,
     isSignal: mapping.isSignal,
   };
 }

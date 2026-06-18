@@ -4010,7 +4010,7 @@ describe('field directive', () => {
       @Component({selector: 'custom-control', template: ``})
       class CustomControl implements FormValueControl<string> {
         readonly value = model('');
-        readonly disabled = input(false, {transform: booleanAttribute});
+        readonly disabled = input<boolean>(false, {transform: booleanAttribute});
         readonly readonly = input(false, {transform: booleanAttribute});
         readonly required = input(false, {transform: booleanAttribute});
         readonly hidden = input(false, {transform: booleanAttribute});

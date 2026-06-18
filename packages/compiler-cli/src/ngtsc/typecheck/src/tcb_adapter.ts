@@ -111,9 +111,10 @@ export function adaptTypeCheckBlockMetadata(
             required: input.required,
             isSignal: input.isSignal,
             transformType: (() => {
-              if (input.transform != null) {
+              const transform = input.transform ?? input.signalInputTransform;
+              if (transform != null) {
                 const node = translateType(
-                  new TransplantedType(input.transform.type),
+                  new TransplantedType(transform.type),
                   env.contextFile,
                   reflector,
                   env.refEmitter,

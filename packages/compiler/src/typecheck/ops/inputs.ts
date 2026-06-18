@@ -95,18 +95,23 @@ export class TcbDirectiveInputsOp extends TcbOp {
       );
       assignment.wrapForTypeChecker();
 
-      for (const {fieldName, required, transformType, isSignal, isTwoWayBinding} of attr.inputs) {
+      for (const {
+        fieldName,
+        required,
+        transformType,
+        isSignal,
+        isTwoWayBinding,
+      } of attr.inputs) {
         let target: TcbExpr;
 
         if (required) {
           seenRequiredInputs.add(fieldName);
         }
 
-        // Note: There is no special logic for transforms/coercion with signal inputs.
-        // For signal inputs, a `transformType` will never be set as we do not capture
-        // the transform in the compiler metadata. Signal inputs incorporate their
-        // transform write type into their member type, and we extract it below when
-        // setting the `WriteT` of such `InputSignalWithTransform<_, WriteT>`.
+        // Signal inputs generally incorporate their transform write type into their member type,
+        // which we extract below from `InputSignalWithTransform<_, WriteT>`. Static text
+        // attributes are the exception: they may need the transform parameter type even when the
+        // public signal write type was intentionally kept narrower.
 
         if (this.dir.coercedInputFields.has(fieldName)) {
           let type: TcbExpr;
@@ -171,7 +176,12 @@ export class TcbDirectiveInputsOp extends TcbOp {
         //   1. keep the direct access to `dir.[field]` so that modifiers are honored.
         //   2. follow the existing pattern where multiple targets assign a single expression.
         //      This is a significant requirement for language service auto-completion.
-        if (isSignal) {
+        if (isSignal && transformType !== undefined && typeof attr.value === 'string') {
+          const id = new TcbExpr(this.tcb.allocateId());
+          const type = new TcbExpr(transformType);
+          this.scope.addStatement(declareVariable(id, type));
+          target = id;
+        } else if (isSignal) {
           const inputSignalBrandWriteSymbol = this.tcb.env.referenceExternalSymbol(
             R3Identifiers.InputSignalBrandWriteType.moduleName,
             R3Identifiers.InputSignalBrandWriteType.name,
