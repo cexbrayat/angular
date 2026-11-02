@@ -34,6 +34,11 @@ See [Workspace Configuration](reference/configs/workspace-config) for informatio
 The JSON schemas for the default schematics used by the CLI to generate projects and parts of projects are collected in the package [`@schematics/angular`](https://github.com/angular/angular-cli/tree/main/packages/schematics/angular).
 The schema describes the options available to the CLI for each of the `ng generate` sub-commands, as shown in the `--help` output.
 
+### Automatic formatting
+
+The Angular CLI automatically formats files created or modified by schematics and update migrations using Prettier or Oxfmt if found in the project.
+Files not changed by the schematic or migration are left untouched.
+
 ## Developing schematics for libraries
 
 As a library developer, you can create your own collections of custom schematics to integrate your library with the Angular CLI.
